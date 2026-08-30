@@ -1,0 +1,37 @@
+language: node_js
+
+addons:
+  apt:
+    packages:
+      - libusb-1.0-0-dev
+      - libudev-dev
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
+    - "$HOME/.cache"
+
+before_install:
+  - npm install -g yarn
+
+install:
+  - yarn --silent
+
+script:
+  - yarn run prettier:diff
+  - yarn run tslint
+  - yarn run tscheck
+  - yarn run test
+  - yarn run build
+
+before_deploy:
+  - pip install --user awscli
+  - yarn run build
+
+deploy:
+  provider: script
+  script: ~/.local/bin/aws s3 sync dist s3://findeth.io --region=eu-west-1 --delete
+  skip-cleanup: true
+  on:
+    branch: master
